@@ -1,11 +1,3 @@
-/*******************************************************
-*
-* Copyright 2015 Vanderbilt University
-* Author: Hunter B. Gilbert
-*
-*
-********************************************************/
-
 #pragma once
 
 #ifdef WIN32
@@ -16,9 +8,12 @@
 #include <time.h>
 #endif
 
+#ifdef __APPLE__
+#include <mach/mach_time.h>
+#endif
+
 namespace Utility
 {
-
 	class CodeTimer
 	{
 	public:
@@ -30,6 +25,9 @@ namespace Utility
 #ifdef __GLIBC__
 			clock_getres(CLOCK_REALTIME, &freq);	
 #endif
+#ifdef __APPLE__
+			mach_timebase_info(&timebase);
+#endif
 		}
 
 		void start() {
@@ -39,6 +37,9 @@ namespace Utility
 #ifdef __GLIBC__
 			clock_gettime(CLOCK_REALTIME, &t1);
 #endif
+#ifdef __APPLE__
+			t1 = mach_absolute_time();
+#endif
 		}
 
 		void stop() {
@@ -47,6 +48,9 @@ namespace Utility
 #endif
 #ifdef __GLIBC__
 			clock_gettime(CLOCK_REALTIME, &t2);
+#endif
+#ifdef __APPLE__
+			t2 = mach_absolute_time();
 #endif
 		}
 
@@ -58,6 +62,12 @@ namespace Utility
 			return static_cast<double>(t2.tv_sec - t1.tv_sec) + 
 						static_cast<double>(t2.tv_nsec - t1.tv_nsec)/1e9;
 #endif
+#ifdef __APPLE__
+			uint64_t elapsed = t2 - t1;
+			// Convert to nanoseconds using timebase info
+			double elapsed_ns = static_cast<double>(elapsed * timebase.numer) / timebase.denom;
+			return elapsed_ns / 1e9; // Convert to seconds
+#endif
 		}
 
 	private:
@@ -67,7 +77,9 @@ namespace Utility
 #ifdef __GLIBC__
 		timespec freq, t1, t2;
 #endif
+#ifdef __APPLE__
+		uint64_t t1, t2;
+		mach_timebase_info_data_t timebase;
+#endif
 	};
-
-
 }
