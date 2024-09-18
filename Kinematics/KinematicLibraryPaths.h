@@ -6,4 +6,4 @@
 #include "include/Options.h"
 #include "include/Utility.h"
 
-#endif // KINEMATIC_LIBRARY_PATHS_H
+#endif
